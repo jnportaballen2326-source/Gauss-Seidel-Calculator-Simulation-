@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gauss–Seidel Method</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script>
+    MathJax = {
+      tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea'] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-label">Numerical Methods · Linear Algebra Iterative</div>
+    <h1 class="header-title">Gauss–Seidel<br><em>Iteration</em></h1>
+    <div class="header-meta">PIT Project 2026</div>
+  </div>
+  <div class="header-grid-bg"></div>
+</header>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="theory">Description</button>
+  <button class="tab-btn" data-tab="examples">Examples</button>
+  <button class="tab-btn" data-tab="calculator">Calculator</button>
+</nav>
+
+<!-- ═══════════════ THEORY ═══════════════ -->
+<section class="tab-content active" id="tab-theory">
+  <div class="content-wrap">
+
+    <div class="section-block">
+      <h2>Overview</h2>
+      <p>The <strong>Gauss–Seidel method</strong> is an iterative technique for solving a square linear system $A\mathbf{x} = \mathbf{b}$. Starting from an initial guess, it repeatedly updates each unknown using the <em>most recently computed values</em> of all other unknowns — making it faster than Jacobi iteration.</p>
+    </div>
+
+    <div class="section-block">
+      <h2>Update Formula</h2>
+      <p>For each variable $x_i$ at iteration $k+1$:</p>
+      $$\boxed{x_i^{(k+1)} = \frac{b_i \;-\; \displaystyle\sum_{j=1}^{i-1} a_{ij}\,x_j^{(k+1)} \;-\; \displaystyle\sum_{j=i+1}^{n} a_{ij}\,x_j^{(k)}}{a_{ii}}}$$
+      <p>Terms with $j &lt; i$ use the <strong>already-updated</strong> values from the current sweep. Terms with $j &gt; i$ use the previous iteration's values.</p>
+    </div>
+
+    <div class="section-block">
+      <h2>Absolute Relative Approximate Error</h2>
+      <p>After each iteration, the error for each variable is:</p>
+      $$\varepsilon_i = \left|\frac{x_i^{new} - x_i^{old}}{x_i^{new}}\right| \times 100\%$$
+      <p>Iteration continues until all $\varepsilon_i$ fall below a specified tolerance, or the maximum number of iterations is reached.</p>
+    </div>
+
+    <div class="section-block">
+      <h2>Step-by-Step Procedure</h2>
+      <pre class="code-block">
+<span class="kw">Step 1:</span> Check diagonal dominance
+         |a_ii| > Σ|a_ij| for j≠i  (guarantees convergence)
+
+<span class="kw">Step 2:</span> Rearrange each equation to isolate x_i
+         x_i = (b_i - Σ a_ij·x_j) / a_ii
+
+<span class="kw">Step 3:</span> Choose initial guess x⁰
+
+<span class="kw">Step 4:</span> For each iteration k = 1, 2, 3, …
+           For each i = 1 to n:
+             substitute current x values into formula
+             compute x_i new
+             compute εᵢ = |x_new - x_old| / |x_new| × 100%
+
+<span class="kw">Step 5:</span> If all εᵢ < tolerance → STOP (converged)
+         Else → repeat Step 4</pre>
+    </div>
+
+    <div class="section-block">
+      <h2>Convergence Condition</h2>
+      <div class="card-grid">
+        <div class="conv-card">
+          <div class="conv-icon">✦</div>
+          <h3>Diagonal Dominance</h3>
+          <p>Convergence guaranteed when each diagonal entry exceeds the sum of all other entries in the same row:</p>
+          $$|a_{ii}| > \sum_{j \neq i} |a_{ij}|$$
+        </div>
+        <div class="conv-card">
+          <div class="conv-icon">✦</div>
+          <h3>Symmetric Positive Definite</h3>
+          <p>If $A = A^T$ and all eigenvalues are positive, Gauss–Seidel is also guaranteed to converge.</p>
+        </div>
+        <div class="conv-card">
+          <div class="conv-icon">✦</div>
+          <h3>Rearranging Equations</h3>
+          <p>If the system is not diagonally dominant as written, try reordering the rows so that the largest coefficients fall on the diagonal.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════ EXAMPLES ═══════════════ -->
+<section class="tab-content" id="tab-examples">
+  <div class="content-wrap">
+
+    <!-- Example 1 (from handwritten notes) -->
+    <div class="section-block example-block">
+      <div class="example-badge">Example 1</div>
+      <h2>3 × 3 System</h2>
+      <p>Solve the system with initial guess $x_1=1,\; x_2=0,\; x_3=1$:</p>
+      $$\begin{cases}12x_1 + 3x_2 - 5x_3 = 1\\ x_1 + 5x_2 + 3x_3 = 28\\ 3x_1 + 7x_2 + 13x_3 = 76\end{cases}$$
+
+      <h3>Step 1 — Diagonal Dominance</h3>
+      $$\begin{bmatrix}12 & 3 & -5\\1 & 5 & 3\\3 & 7 & 13\end{bmatrix}$$
+      <p>
+        Row 1: $|12| = 12 > |3|+|-5| = 8$ ✓<br>
+        Row 2: $|5| = 5 > |1|+|3| = 4$ ✓<br>
+        Row 3: $|13| = 13 > |3|+|7| = 10$ ✓
+      </p>
+
+      <h3>Step 2 — Rearrange</h3>
+      $$x_1 = \frac{1 - 3x_2 + 5x_3}{12}, \quad x_2 = \frac{28 - x_1 - 3x_3}{5}, \quad x_3 = \frac{76 - 3x_1 - 7x_2}{13}$$
+
+      <h3>Iteration 1 — using $x_1=1,\;x_2=0,\;x_3=1$</h3>
+      <div class="step-box">
+        $$x_1 = \frac{1 - 3(0) + 5(1)}{12} = \frac{1 - 0 + 5}{12} = \frac{6}{12} = 0.5$$
+        $$\varepsilon_1 = \left|\frac{0.5 - 1}{0.5}\right| \times 100 = 100\%$$
+        $$x_2 = \frac{28 - 0.5 - 3(1)}{5} = \frac{28 - 0.5 - 3}{5} = \frac{24.5}{5} = 4.9$$
+        $$\varepsilon_2 = \left|\frac{4.9 - 0}{4.9}\right| \times 100 = 100\%$$
+        $$x_3 = \frac{76 - 3(0.5) - 7(4.9)}{13} = \frac{76 - 1.5 - 34.3}{13} = \frac{40.2}{13} \approx 3.092$$
+        $$\varepsilon_3 = \left|\frac{3.092 - 1}{3.092}\right| \times 100 \approx 67.66\%$$
+      </div>
+
+      <h3>Iteration 2 — using updated values</h3>
+      <div class="step-box">
+        $$x_1 = \frac{1 - 3(4.9) + 5(3.092)}{12} = \frac{1 - 14.7 + 15.46}{12} = \frac{1.76}{12} \approx 0.1468$$
+        $$\varepsilon_1 = \left|\frac{0.1468 - 0.5}{0.1468}\right| \times 100 \approx 240.6\%$$
+        $$x_2 = \frac{28 - 0.1468 - 3(3.092)}{5} = \frac{28 - 0.1468 - 9.276}{5} = \frac{18.577}{5} \approx 3.715$$
+        $$\varepsilon_2 = \left|\frac{3.715 - 4.9}{3.715}\right| \times 100 \approx 31.9\%$$
+        $$x_3 = \frac{76 - 3(0.1468) - 7(3.715)}{13} = \frac{76 - 0.4404 - 26.005}{13} = \frac{49.555}{13} \approx 3.812$$
+        $$\varepsilon_3 = \left|\frac{3.812 - 3.092}{3.812}\right| \times 100 \approx 18.9\%$$
+      </div>
+
+      <h3>Summary Table</h3>
+      <div class="iter-table-wrap">
+        <table class="iter-table">
+          <thead><tr><th>Iter</th><th>$x_1$</th><th>$\varepsilon_1$</th><th>$x_2$</th><th>$\varepsilon_2$</th><th>$x_3$</th><th>$\varepsilon_3$</th></tr></thead>
+          <tbody>
+            <tr class="guess-row"><td>0 (guess)</td><td>1</td><td>—</td><td>0</td><td>—</td><td>1</td><td>—</td></tr>
+            <tr><td>1</td><td>0.5</td><td>100%</td><td>4.9</td><td>100%</td><td>3.092</td><td>67.66%</td></tr>
+            <tr><td>2</td><td>0.1468</td><td>240.6%</td><td>3.715</td><td>31.9%</td><td>3.812</td><td>18.9%</td></tr>
+            <tr><td>3</td><td>0.0816</td><td>79.9%</td><td>3.549</td><td>4.68%</td><td>3.934</td><td>3.10%</td></tr>
+            <tr><td>…</td><td>…</td><td>…</td><td>…</td><td>…</td><td>…</td><td>…</td></tr>
+            <tr class="sol-row"><td>converged</td><td>≈ 0.0356</td><td>&lt;0.01%</td><td>≈ 3.490</td><td>&lt;0.01%</td><td>≈ 3.976</td><td>&lt;0.01%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Example 2 -->
+    <div class="section-block example-block">
+      <div class="example-badge">Example 2</div>
+      <h2>4 × 4 Heat Conduction System</h2>
+      <p>Solve with initial guess $\mathbf{T}^{(0)} = (0,0,0,0)$:</p>
+      $$\begin{bmatrix}4&-1&0&-1\\-1&4&-1&0\\0&-1&4&-1\\-1&0&-1&4\end{bmatrix}\begin{bmatrix}T_1\\T_2\\T_3\\T_4\end{bmatrix}=\begin{bmatrix}100\\200\\200\\100\end{bmatrix}$$
+
+      <h3>Step 1 — Diagonal Dominance</h3>
+      <p>Every row: $|4| = 4 > |-1|+|-1| = 2$ ✓ → Convergence guaranteed.</p>
+
+      <h3>Step 2 — Rearrange</h3>
+      $$T_1 = \frac{100 + T_2 + T_4}{4}, \quad T_2 = \frac{200 + T_1 + T_3}{4}$$
+      $$T_3 = \frac{200 + T_2 + T_4}{4}, \quad T_4 = \frac{100 + T_1 + T_3}{4}$$
+
+      <h3>Iteration 1</h3>
+      <div class="step-box">
+        $$T_1 = \frac{100 + 0 + 0}{4} = 25.0 \qquad \varepsilon_1 = 100\%$$
+        $$T_2 = \frac{200 + 25 + 0}{4} = 56.25 \qquad \varepsilon_2 = 100\%$$
+        $$T_3 = \frac{200 + 56.25 + 0}{4} = 64.0625 \qquad \varepsilon_3 = 100\%$$
+        $$T_4 = \frac{100 + 25 + 64.0625}{4} = 47.2656 \qquad \varepsilon_4 = 100\%$$
+      </div>
+
+      <h3>Summary Table</h3>
+      <div class="iter-table-wrap">
+        <table class="iter-table">
+          <thead><tr><th>Iter</th><th>$T_1$</th><th>$\varepsilon_1$</th><th>$T_2$</th><th>$\varepsilon_2$</th><th>$T_3$</th><th>$\varepsilon_3$</th><th>$T_4$</th><th>$\varepsilon_4$</th></tr></thead>
+          <tbody>
+            <tr class="guess-row"><td>0</td><td>0</td><td>—</td><td>0</td><td>—</td><td>0</td><td>—</td><td>0</td><td>—</td></tr>
+            <tr><td>1</td><td>25.00</td><td>100%</td><td>56.25</td><td>100%</td><td>64.06</td><td>100%</td><td>47.27</td><td>100%</td></tr>
+            <tr><td>2</td><td>43.75</td><td>42.9%</td><td>76.95</td><td>26.9%</td><td>77.10</td><td>16.9%</td><td>55.21</td><td>14.4%</td></tr>
+            <tr><td>5</td><td>62.11</td><td>1.6%</td><td>87.23</td><td>0.9%</td><td>87.27</td><td>0.9%</td><td>62.35</td><td>0.6%</td></tr>
+            <tr class="sol-row"><td>converged</td><td>62.50</td><td>&lt;0.01%</td><td>87.50</td><td>&lt;0.01%</td><td>87.50</td><td>&lt;0.01%</td><td>62.50</td><td>&lt;0.01%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="solution-box">
+        $$\mathbf{T}^* = (62.5,\; 87.5,\; 87.5,\; 62.5)^T \text{ °C}$$
+        <p><strong>Verify:</strong> $4(62.5) - 87.5 - 62.5 = 100$ ✓, $-62.5 + 4(87.5) - 87.5 = 200$ ✓</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════ CALCULATOR ═══════════════ -->
+<section class="tab-content" id="tab-calculator">
+  <div class="content-wrap">
+
+    <div class="section-block">
+      <h2>Interactive Calculator</h2>
+      <p>Enter your system $A\mathbf{x} = \mathbf{b}$. The calculator shows every step exactly as done by hand.</p>
+
+      <div class="calc-form">
+        <div class="form-row">
+          <label>Matrix Size $n$</label>
+          <div class="size-buttons">
+            <button class="size-btn" data-n="2">2</button>
+            <button class="size-btn active" data-n="3">3</button>
+            <button class="size-btn" data-n="4">4</button>
+            <button class="size-btn" data-n="5">5</button>
+            <button class="size-btn" data-n="6">6</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>Matrix $A$ <span class="hint">(click cells to edit)</span></label>
+          <div id="matrix-grid" class="matrix-grid"></div>
+        </div>
+
+        <div class="form-row">
+          <label>Vector $\mathbf{b}$</label>
+          <div id="vector-b" class="vector-b"></div>
+        </div>
+
+        <div class="form-row">
+          <label>Initial Guess $\mathbf{x}^{(0)}$ <span class="hint">(leave as 0 if unsure)</span></label>
+          <div id="vector-x0" class="vector-b"></div>
+        </div>
+
+        <div class="form-row settings-row">
+          <div class="setting-item">
+            <label>Stop when ε &lt; (%)</label>
+            <input type="text" id="tol-input" value="0.5" class="setting-input" placeholder="e.g. 0.5" />
+            <span class="hint-small">leave blank = run all iterations</span>
+          </div>
+          <div class="setting-item">
+            <label>Max Iterations</label>
+            <input type="number" id="maxiter-input" value="10" min="1" max="500" class="setting-input" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>Presets</label>
+          <div class="preset-buttons">
+            <button class="preset-btn" data-preset="handwritten">From Notes (3×3)</button>
+            <button class="preset-btn" data-preset="ex2">Heat (4×4)</button>
+            <button class="preset-btn" data-preset="simple">Simple (2×2)</button>
+          </div>
+        </div>
+
+        <button id="solve-btn" class="solve-btn">Solve</button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results-area" class="results-area hidden">
+
+      <div class="section-block">
+        <div id="dom-check"></div>
+      </div>
+
+      <div class="section-block">
+        <div id="formula-display"></div>
+      </div>
+
+      <div class="section-block">
+        <div id="summary-table"></div>
+      </div>
+
+      <div class="section-block">
+        <h2>Step-by-Step Iterations</h2>
+        <div id="iter-details"></div>
+      </div>
+
+      <div class="section-block">
+        <div id="final-solution"></div>
+      </div>
+
+    </div>
+
+    <div id="error-area" class="error-area hidden"></div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <p>Gauss–Seidel Numerical Method · PIT Project 2026</p>
+</footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
